@@ -1,6 +1,6 @@
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-project "TemplateApp" -- TODO: Rename
+project "Graph-Visualizer"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"

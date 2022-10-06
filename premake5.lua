@@ -1,5 +1,5 @@
-workspace "SFMLAppTemplate"
+workspace "Graph-Visualizer"
 	architecture "x86_64"
 	configurations { "Debug", "Release", }
 
-include "TemplateApp" -- TODO: Rename
+include "Graph-Visualizer"

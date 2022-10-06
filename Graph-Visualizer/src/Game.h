@@ -4,18 +4,21 @@
 
 namespace App {
 
-	class Game : public Application
+	class Visualizer : public Application
 	{
 	public:
-		Game(sf::RenderWindow* renderWindow, const std::string& title);
-		virtual ~Game() = default;
+		Visualizer(sf::RenderWindow* renderWindow);
 
 		virtual void Update(sf::Time ts) override;
 		virtual void OnEvent(sf::Event& event) override;
+
+		void Draw();
 	private:
 		sf::RenderWindow* window = nullptr;
+		sf::Vector2u size{ 1280, 720 };
 
-		sf::CircleShape shape;
+		sf::Texture texture;
+		sf::Sprite sprite;
 	};
 
 }
