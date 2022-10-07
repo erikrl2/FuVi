@@ -9,15 +9,11 @@ namespace App {
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
 		: window(renderWindow)
 	{
-		window->create(sf::VideoMode(windowSize.x, windowSize.y), "Graph-Visualizer",
+		window->create(sf::VideoMode(Width, Height), "Graph-Visualizer",
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
 		window->setVerticalSyncEnabled(true);
 
-		// TODO: Switch to using vertices instead of image/texture/sprite
-		image.create(windowSize.x, windowSize.y, sf::Color::White);
-		texture.loadFromImage(image);
-		sprite.setTexture(texture, true);
-
+		// TODO: Take functions by user input
 		functions.emplace_back(sf::Color::Red, [](float x) { return x; });
 		functions.emplace_back(sf::Color::Red, [](float x) { return x * x; });
 		functions.emplace_back(sf::Color::Blue, [](float x) { return x * x * x; });
@@ -25,39 +21,35 @@ namespace App {
 		functions.emplace_back(sf::Color::Magenta, [](float x) { return std::cosf(x); });
 	}
 
+	static bool draw = true;
+
 	void Visualizer::Update(float ts)
 	{
-		constexpr float pixelsPerUnit = 40;
+		if (!draw)
+			return;
 
-		// TODO: Only recreate on change
-		image.create(image.getSize().x, image.getSize().y, sf::Color::White);
+		window->clear();
+
+		constexpr float pixelsPerUnit = 40;
 
 		for (auto& f : functions)
 		{
-			for (uint32_t drawX = 0; drawX < windowSize.x; drawX++)
+			for (int drawX = 0; drawX < Width; drawX++)
 			{
-				float x = (drawX - windowSize.x / 2.f) / pixelsPerUnit;
+				float x = (drawX - Width / 2.f) / pixelsPerUnit;
 				float y = f.Function(x);
 
-				uint32_t drawY = (uint32_t)(windowSize.y - (y * pixelsPerUnit + windowSize.y / 2.f));
+				float drawY = Height - (y * pixelsPerUnit + Height / 2.f);
 
-				if (drawY < 0 || drawY >= windowSize.y)
-					continue;
-
-				image.setPixel(drawX, drawY, f.Color);
+				f.vertices[drawX] = { {(float)drawX, drawY}, f.Color };
 			}
+
+			window->draw(f.vertices, Width, sf::LineStrip);
 		}
 
-		texture.update(image);
-
-		Draw();
-	}
-
-	void Visualizer::Draw()
-	{
-		window->clear();
-		window->draw(sprite);
 		window->display();
+
+		draw = false;
 	}
 
 	void Visualizer::OnEvent(sf::Event& event)
@@ -67,6 +59,11 @@ namespace App {
 		case sf::Event::Closed:
 		{
 			window->close();
+			break;
+		}
+		case sf::Event::Resized:
+		{
+			draw = true;
 			break;
 		}
 		}
