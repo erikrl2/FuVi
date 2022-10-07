@@ -9,7 +9,7 @@ namespace App {
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
 		: window(renderWindow)
 	{
-		window->create(sf::VideoMode(Width, Height), "Graph-Visualizer",
+		window->create(sf::VideoMode(Width, Height), "Function Visualizer",
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
 		window->setVerticalSyncEnabled(true);
 
