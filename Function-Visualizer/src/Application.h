@@ -5,7 +5,7 @@
 class Application
 {
 public:
-	virtual void Update(sf::Time ts) = 0;
+	virtual void Update(float ts) = 0;
 	virtual void OnEvent(sf::Event& event) = 0;
 public:
 	template<class App, class... Args>
@@ -29,7 +29,7 @@ public:
 			sf::Time deltaTime = time - lastTime;
 			lastTime = time;
 
-			app.Update(deltaTime);
+			app.Update(deltaTime.asSeconds());
 		}
 	}
 };

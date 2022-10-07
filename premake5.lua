@@ -1,5 +1,5 @@
-workspace "Graph-Visualizer"
+workspace "Function-Visualizer"
 	architecture "x86_64"
 	configurations { "Debug", "Release", }
 
-include "Graph-Visualizer"
+include "Function-Visualizer"

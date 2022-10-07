@@ -1,6 +1,6 @@
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-project "Graph-Visualizer"
+project "Function-Visualizer"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
