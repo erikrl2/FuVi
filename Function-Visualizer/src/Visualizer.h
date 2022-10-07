@@ -2,6 +2,7 @@
 
 #include "Application.h"
 
+#include <functional>
 #include <vector>
 
 namespace App {
@@ -12,10 +13,10 @@ namespace App {
 	struct FunctionData
 	{
 		sf::Color Color;
-		float (*Function)(float);
+		std::function<float(float)> Function;
 		sf::Vertex vertices[Width]{};
 
-		FunctionData(sf::Color color, float (*func)(float))
+		FunctionData(sf::Color color, const auto& func)
 			: Color{ color }, Function{ func } {}
 	};
 
@@ -26,11 +27,27 @@ namespace App {
 
 		virtual void Update(float ts) override;
 		virtual void OnEvent(sf::Event& event) override;
+
+		void HandleInput();
 	private:
 		sf::RenderWindow* window = nullptr;
 
+		std::string input;
+		sf::Text inputText;
+		sf::Font font;
+
 		std::vector<FunctionData> functions;
 	};
+
+	namespace Utils {
+
+		inline bool IsDigit(const std::string& s)
+		{
+			return !s.empty() && std::find_if(s.begin(), s.end(),
+				[](unsigned char c) { return std::isdigit(c); }) != s.end();
+		}
+
+	}
 
 }
 

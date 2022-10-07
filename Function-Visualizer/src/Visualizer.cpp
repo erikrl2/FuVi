@@ -13,12 +13,10 @@ namespace App {
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
 		window->setVerticalSyncEnabled(true);
 
-		// TODO: Take functions by user input
-		functions.emplace_back(sf::Color::Red, [](float x) { return x; });
-		functions.emplace_back(sf::Color::Red, [](float x) { return x * x; });
-		functions.emplace_back(sf::Color::Blue, [](float x) { return x * x * x; });
-		functions.emplace_back(sf::Color::Green, [](float x) { return std::sinf(x); });
-		functions.emplace_back(sf::Color::Magenta, [](float x) { return std::cosf(x); });
+		if (font.loadFromFile("C:/Windows/Fonts/arial.ttf"))
+			inputText.setFont(font);
+		else
+			std::cout << "Font could not be loaded\n";
 	}
 
 	static bool draw = true;
@@ -47,26 +45,73 @@ namespace App {
 			window->draw(f.vertices, Width, sf::LineStrip);
 		}
 
+		window->draw(inputText);
+
 		window->display();
 
 		draw = false;
+	}
+
+	void Visualizer::HandleInput()
+	{
+		// TODO: Display function and text in same color
+		// TODO: Ability to display multiple functions at once
+
+		if (input.find('x') != input.npos)
+		{
+			std::string astr = input.substr(0, input.find_first_of('x'));
+			float af = 0;
+
+			if (astr.empty())
+				af = 1;
+			else if (Utils::IsDigit(astr))
+				af = std::stof(astr);
+			else
+				return;
+
+			functions.emplace_back(sf::Color::White, [=](float x) { return af * x; });
+		}
+		else
+			functions.clear();
 	}
 
 	void Visualizer::OnEvent(sf::Event& event)
 	{
 		switch (event.type)
 		{
+		case sf::Event::TextEntered:
+		{
+			auto character = event.text.unicode;
+			if (character == 8) // 8 = Backspace
+			{
+				if (!input.empty())
+					input.erase(input.size() - 1);
+			}
+			else if (character == 27) // 27 = Esc
+			{
+				if (!input.empty())
+					input.clear();
+			}
+			else if (character < 128 && input.size() < 32)
+				input += character;
+			else
+				break;
+
+			inputText.setString(input);
+
+			HandleInput();
+			break;
+		}
 		case sf::Event::Closed:
 		{
 			window->close();
 			break;
 		}
-		case sf::Event::Resized:
-		{
+		}
+
+		if (event.type == sf::Event::TextEntered ||
+			event.type == sf::Event::Resized)
 			draw = true;
-			break;
-		}
-		}
 	}
 
 }
