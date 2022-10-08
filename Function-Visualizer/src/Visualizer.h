@@ -17,16 +17,20 @@ namespace App {
 		sf::Vertex vertices[Width]{};
 
 		FunctionData(sf::Color color, const auto& func)
-			: Color{ color }, Function{ func } {}
+			: Color(color), Function(func) {}
 	};
 
 	class Visualizer : public Application
 	{
 	public:
 		Visualizer(sf::RenderWindow* renderWindow);
+		~Visualizer() override;
 
-		virtual void Update(float ts) override;
-		virtual void OnEvent(sf::Event& event) override;
+		void Update(sf::Time ts) override;
+		void Draw() override;
+		void OnEvent(sf::Event& event) override;
+
+		void UpdateImGui(sf::Time ts);
 	private:
 		sf::RenderWindow* window = nullptr;
 
@@ -35,15 +39,15 @@ namespace App {
 		float pixelsPerUnit = 40;
 	};
 
-	namespace Utils {
+	//namespace Utils {
 
-		inline bool IsDigit(const std::string& s)
-		{
-			return !s.empty() && std::find_if(s.begin(), s.end(),
-				[](unsigned char c) { return std::isdigit(c); }) != s.end();
-		}
+	//	inline bool IsDigit(const std::string& s)
+	//	{
+	//		return !s.empty() && std::find_if(s.begin(), s.end(),
+	//			[](unsigned char c) { return std::isdigit(c); }) != s.end();
+	//	}
 
-	}
+	//}
 
 }
 

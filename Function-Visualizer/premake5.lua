@@ -11,7 +11,7 @@ project "Function-Visualizer"
 	files
 	{
 		"src/**.h",
-		"src/**.cpp",
+		"src/**.cpp"
 	}
 
 	defines
@@ -22,7 +22,8 @@ project "Function-Visualizer"
 	includedirs
 	{
 		"src",
-		"vendor/SFML-2.5.1/include"
+		"vendor/SFML-2.5.1/include",
+		"vendor/imgui-sfml"
 	}
 
 	libdirs
@@ -32,10 +33,11 @@ project "Function-Visualizer"
 
 	links
 	{
+		"ImGui-SFML",
 		"opengl32.lib",
 		"winmm.lib",
 		"gdi32.lib",
-		"freetype.lib",
+		"freetype.lib"
 	}
 
 	filter "system:windows"
