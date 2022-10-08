@@ -27,16 +27,12 @@ namespace App {
 
 		virtual void Update(float ts) override;
 		virtual void OnEvent(sf::Event& event) override;
-
-		void HandleInput();
 	private:
 		sf::RenderWindow* window = nullptr;
 
-		std::string input;
-		sf::Text inputText;
-		sf::Font font;
-
 		std::vector<FunctionData> functions;
+
+		float pixelsPerUnit = 40;
 	};
 
 	namespace Utils {
