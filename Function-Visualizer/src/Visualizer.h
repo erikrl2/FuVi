@@ -12,12 +12,16 @@ namespace App {
 
 	struct FunctionData
 	{
-		sf::Color Color;
 		std::function<float(float)> Function;
+		sf::Color Color;
+
 		sf::Vertex vertices[Width]{};
 
-		FunctionData(sf::Color color, const auto& func)
-			: Color(color), Function(func) {}
+		char Buffer[32]{};
+
+		FunctionData() = default;
+		FunctionData(const auto& func, sf::Color color)
+			: Function(func), Color(color) {}
 	};
 
 	class Visualizer : public Application
@@ -31,6 +35,8 @@ namespace App {
 		void OnEvent(sf::Event& event) override;
 
 		void UpdateImGui(sf::Time ts);
+
+		void DisplayNewPrompt();
 	private:
 		sf::RenderWindow* window = nullptr;
 
@@ -40,13 +46,11 @@ namespace App {
 	};
 
 	//namespace Utils {
-
 	//	inline bool IsDigit(const std::string& s)
 	//	{
 	//		return !s.empty() && std::find_if(s.begin(), s.end(),
 	//			[](unsigned char c) { return std::isdigit(c); }) != s.end();
 	//	}
-
 	//}
 
 }

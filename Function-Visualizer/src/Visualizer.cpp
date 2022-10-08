@@ -7,6 +7,8 @@
 
 // TODO: Remove unused static libs
 
+#define FOFX(function) [](float x) -> float { return function; }
+
 namespace App {
 
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
@@ -19,7 +21,10 @@ namespace App {
 		ImGui::SFML::Init(*window);
 		ImGui::GetIO().IniFilename = nullptr;
 
-		functions.emplace_back(sf::Color::Red, [](float x) { return x * x; });
+		// DEBUG
+		functions.emplace_back(FOFX(x * x), sf::Color::Red);
+		functions.emplace_back(FOFX(x * x * x), sf::Color::Green);
+		functions.emplace_back(FOFX(sinf(x)), sf::Color::Blue);
 	}
 
 	Visualizer::~Visualizer()
@@ -27,7 +32,7 @@ namespace App {
 		ImGui::SFML::Shutdown(*window);
 	}
 
-	static bool recalculate = true;
+	//static bool recalculate = true;
 
 	void Visualizer::Update(sf::Time ts)
 	{
@@ -35,8 +40,8 @@ namespace App {
 
 		UpdateImGui(ts);
 
-		if (!recalculate)
-			return;
+		//if (!recalculate)
+		//	return;
 
 		for (auto& f : functions)
 		{
@@ -51,24 +56,53 @@ namespace App {
 			}
 		}
 
-		recalculate = false;
+		//recalculate = false;
 	}
 
 	void Visualizer::UpdateImGui(sf::Time ts)
 	{
 		ImGui::SetNextWindowPos({ 0, 0 });
-		ImGui::SetNextWindowSize({ 200, (float)window->getSize().y });
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
-			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
-		ImGui::Begin("Functions", 0, flags);
+		ImGui::SetNextWindowSize({ 330, 0 });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { .5f, .5f });
+		ImGui::PushStyleColor(ImGuiCol_TitleBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive]);
+		ImGui::Begin("Functions", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
 
-		static char fbuf[32]{};
-		ImGui::InputText("f(x)", fbuf, sizeof(fbuf));
+		int indexToRemove = -1;
+		for (int i = 0; i < functions.size(); i++)
+		{
+			auto& f = functions[i];
+			ImGui::PushID(i);
+
+			ImVec4 col = f.Color;
+			if (ImGui::ColorEdit3("##color", &col.x, ImGuiColorEditFlags_NoInputs))
+				f.Color = col;
+
+			ImGui::SameLine();
+
+			if (ImGui::InputText("##input", f.Buffer, sizeof(f.Buffer)))
+			{
+				// TODO: Interprete buffer
+				// If buffer contains valid function, update f.Function
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Del"))
+				indexToRemove = i;
+
+			ImGui::PopID();
+		}
+		if (indexToRemove != -1)
+			functions.erase(functions.begin() + indexToRemove);
+
+		DisplayNewPrompt();
 
 		ImGui::End();
 
 		// DEBUG
-		ImGui::SetNextWindowPos({ window->getSize().x - 100.f, 50 });
+		ImGui::SetNextWindowPos({ window->getSize().x - 100.f, 30 });
 		ImGui::Begin("Debug");
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
 		ImGui::End();
@@ -106,8 +140,22 @@ namespace App {
 		}
 		}
 
-		if (event.type & (sf::Event::Resized | sf::Event::MouseWheelScrolled))
-			recalculate = true;
+		//if (event.type == sf::Event::Resized ||
+		//	event.type == sf::Event::MouseWheelScrolled)
+		//	recalculate = true;
+	}
+
+	void Visualizer::DisplayNewPrompt()
+	{
+		static ImVec4 col{ 1, 1, 1, 1 };
+		ImGui::ColorEdit3("##Color", &col.x, ImGuiColorEditFlags_NoInputs);
+		ImGui::SameLine();
+		static char buf[32]{};
+		if (ImGui::InputText("##f(x)", buf, sizeof(buf)))
+		{
+			// TODO: Interprete buffer
+			// If buffer contains valid function, push back function
+		}
 	}
 
 }
