@@ -1,9 +1,7 @@
 #pragma once
 
 #include "Application.h"
-
-#include <functional>
-#include <vector>
+#include "pch.h"
 
 namespace App {
 
@@ -12,16 +10,17 @@ namespace App {
 
 	struct FunctionData
 	{
-		std::function<float(float)> Function;
-		sf::Color Color;
-
-		sf::Vertex vertices[Width]{};
-
+		sf::Color Color{ -1 };
 		char Buffer[32]{};
+		float X{};
+		exprtk::expression<float> Expression;
+		sf::Vertex Vertices[Width]{};
 
-		FunctionData() = default;
-		FunctionData(const auto& func, sf::Color color)
-			: Function(func), Color(color) {}
+		float Function(float x)
+		{
+			X = x;
+			return Expression.value();
+		}
 	};
 
 	class Visualizer : public Application
@@ -35,23 +34,14 @@ namespace App {
 		void OnEvent(sf::Event& event) override;
 
 		void UpdateImGui(sf::Time ts);
-
-		void DisplayNewPrompt();
 	private:
 		sf::RenderWindow* window = nullptr;
 
-		std::vector<FunctionData> functions;
-
+		std::vector<std::shared_ptr<FunctionData>> functions;
 		float pixelsPerUnit = 40;
-	};
 
-	//namespace Utils {
-	//	inline bool IsDigit(const std::string& s)
-	//	{
-	//		return !s.empty() && std::find_if(s.begin(), s.end(),
-	//			[](unsigned char c) { return std::isdigit(c); }) != s.end();
-	//	}
-	//}
+		sf::Vertex grid[4];
+	};
 
 }
 

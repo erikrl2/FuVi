@@ -8,6 +8,9 @@ project "Function-Visualizer"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
+	pchheader "pch.h"
+	pchsource "src/pch.cpp"
+
 	files
 	{
 		"src/**.h",
@@ -23,7 +26,8 @@ project "Function-Visualizer"
 	{
 		"src",
 		"vendor/SFML-2.5.1/include",
-		"vendor/imgui-sfml"
+		"vendor/imgui-sfml",
+		"vendor/exprtk"
 	}
 
 	libdirs
