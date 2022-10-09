@@ -130,6 +130,7 @@ namespace App {
 			std::shared_ptr<FunctionData> fData = std::make_shared<FunctionData>();
 
 			symbolTable.add_variable("x", fData->X);
+			symbolTable.add_constants();
 			expression.register_symbol_table(symbolTable);
 			if (parser.compile(exprCString, expression))
 			{
