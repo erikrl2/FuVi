@@ -30,15 +30,20 @@ namespace App {
 		~Visualizer() override;
 
 		void Update(sf::Time ts) override;
-		void Draw() override;
-		void OnEvent(sf::Event& event) override;
-
 		void UpdateImGui(sf::Time ts);
+		void UpdateGraphOffset();
+
+		void Draw() override;
+
+		void OnEvent(sf::Event& event) override;
 	private:
 		sf::RenderWindow* window = nullptr;
 
 		std::vector<std::shared_ptr<FunctionData>> functions;
 		float pixelsPerUnit = 40;
+
+		sf::Vector2i graphOffset;
+		bool canDragGraph = true;
 
 		sf::Vertex grid[4];
 	};

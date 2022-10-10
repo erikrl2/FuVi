@@ -1,3 +1,4 @@
-# Polynomial Function Visualizer
+# Function Visualizer
 
-![Visualizer](https://user-images.githubusercontent.com/92889691/194559015-f6855e74-6d6e-4ead-a5b9-c5014b698fce.png)
+![FunctionVisualizer](https://user-images.githubusercontent.com/92889691/194900298-6b83acdb-4970-42a2-abc2-de162d4c4904.png)
+

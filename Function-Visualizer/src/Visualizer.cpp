@@ -20,11 +20,8 @@ namespace App {
 		ImGui::SFML::Init(*window);
 		ImGui::GetIO().IniFilename = nullptr;
 
-		sf::Color gridColor(255, 255, 255, 63);
-		grid[0] = { sf::Vertex{{0, Height / 2.f}, gridColor} };
-		grid[1] = { sf::Vertex{{Width, Height / 2.f}, gridColor} };
-		grid[2] = { sf::Vertex{{Width / 2.f, 0}, gridColor} };
-		grid[3] = { sf::Vertex{{Width / 2.f, Height}, gridColor} };
+		for (int i = 0; i < 4; i++)
+			grid[i].color = { 255, 255, 255, 63 };
 	}
 
 	Visualizer::~Visualizer()
@@ -32,26 +29,22 @@ namespace App {
 		ImGui::SFML::Shutdown(*window);
 	}
 
-	static bool redraw = false;
-
 	void Visualizer::Update(sf::Time ts)
 	{
 		ImGui::SFML::Update(*window, ts);
 
 		UpdateImGui(ts);
-
-		if (!redraw)
-			return;
-		redraw = false;
-
-		// TODO: Move graph with mouse
+		UpdateGraphOffset();
 
 		for (auto& fData : functions)
 		{
 			for (int drawX = 0; drawX < Width; drawX++)
 			{
 				float x = (drawX - Width / 2.f) / pixelsPerUnit;
+				x -= graphOffset.x / pixelsPerUnit;
+
 				float y = fData->Function(x);
+				y -= graphOffset.y / pixelsPerUnit;
 
 				float drawY = Height - (y * pixelsPerUnit + Height / 2.f);
 
@@ -80,7 +73,6 @@ namespace App {
 			if (ImGui::ColorEdit3("##color", &col.x, ImGuiColorEditFlags_NoInputs))
 			{
 				fData->Color = col;
-				redraw = true;
 			}
 
 			ImGui::SameLine();
@@ -89,7 +81,6 @@ namespace App {
 			{
 				exprtk::parser<float> parser;
 				parser.compile(fData->Buffer, fData->Expression);
-				redraw = true;
 			}
 
 			ImGui::SameLine();
@@ -100,10 +91,7 @@ namespace App {
 			ImGui::PopID();
 		}
 		if (indexToRemove != -1)
-		{
 			functions.erase(functions.begin() + indexToRemove);
-			redraw = true;
-		}
 
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
 		ImGui::Text("Add new:");
@@ -141,43 +129,41 @@ namespace App {
 
 				functions.push_back(fData);
 			}
-
-			redraw = true;
 		}
+
+		canDragGraph = !ImGui::IsWindowHovered();
 
 		ImGui::End();
 
 #ifdef DEBUG
-		ImGui::SetNextWindowPos({ window->getSize().x - 100.f, 30 });
-		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
+		ImGui::SetNextWindowPos({ 10, window->getSize().y - 100.f });
+		ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
 		ImGui::End();
 #endif
 	}
 
-	void Visualizer::OnEvent(sf::Event& event)
+	void Visualizer::UpdateGraphOffset()
 	{
-		ImGui::SFML::ProcessEvent(event);
+		static bool dragging = false;
+		static sf::Vector2i lastPos;
 
-		switch (event.type)
+		if (canDragGraph && sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-		case sf::Event::MouseWheelScrolled:
-		{
-			static int zoom = 39;
-			zoom += (int)event.mouseWheelScroll.delta;
-			pixelsPerUnit = (float)std::pow(1.1f, zoom);
-			break;
+			sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
+			if (dragging) graphOffset += mousePos - lastPos;
+			lastPos = mousePos;
+			dragging = true;
 		}
-		case sf::Event::Closed:
+		else
 		{
-			window->close();
-			break;
-		}
+			dragging = false;
 		}
 
-		if (event.type == sf::Event::Resized ||
-			event.type == sf::Event::MouseWheelScrolled)
-			redraw = true;
+		grid[0].position = { 0, Height / 2.f + graphOffset.y };
+		grid[1].position = { Width, Height / 2.f + graphOffset.y };
+		grid[2].position = { Width / 2.f + graphOffset.x, 0 };
+		grid[3].position = { Width / 2.f + graphOffset.x, Height };
 	}
 
 	void Visualizer::Draw()
@@ -192,6 +178,32 @@ namespace App {
 		ImGui::SFML::Render(*window);
 
 		window->display();
+	}
+
+	void Visualizer::OnEvent(sf::Event& event)
+	{
+		ImGui::SFML::ProcessEvent(event);
+
+		switch (event.type)
+		{
+		case sf::Event::MouseWheelScrolled:
+		{
+			static float zoom = 38.704f; // 1.1^38.704 = 40
+			zoom += event.mouseWheelScroll.delta;
+			pixelsPerUnit = powf(1.1f, zoom);
+			break;
+		}
+		case sf::Event::Resized:
+		{
+			// TODO
+			break;
+		}
+		case sf::Event::Closed:
+		{
+			window->close();
+			break;
+		}
+		}
 	}
 
 }
