@@ -36,22 +36,25 @@ namespace App {
 		UpdateImGui(ts);
 		UpdateGraphOffset();
 
-		for (auto& fData : functions)
+		for (int i = 0; i < functions.size(); i++)
 		{
-			if (fData->Vertices.getVertexCount() != width)
-				fData->Vertices.resize(width);
+			auto& fData = functions[i];
+
+			if (fData.Vertices.getVertexCount() != width)
+				fData.Vertices.resize(width);
 
 			for (int drawX = 0; drawX < width; drawX++)
 			{
-				float x = (drawX - width / 2.f) / pixelsPerUnit;
+				float& x = *xValues[i];
+				x = (drawX - width / 2.f) / pixelsPerUnit;
 				x -= graphOffset.x / pixelsPerUnit;
 
-				float y = fData->Function(x);
+				float y = fData.Expression.value();
 				y -= graphOffset.y / pixelsPerUnit;
 
 				float drawY = height - (y * pixelsPerUnit + height / 2.f);
 
-				fData->Vertices[drawX] = { {(float)drawX, drawY}, fData->Color };
+				fData.Vertices[drawX] = { {(float)drawX, drawY}, fData.Color };
 			}
 		}
 	}
@@ -72,18 +75,18 @@ namespace App {
 			auto& fData = functions[i];
 			ImGui::PushID(i);
 
-			ImVec4 col = fData->Color;
+			ImVec4 col = fData.Color;
 			if (ImGui::ColorEdit3("##color", &col.x, ImGuiColorEditFlags_NoInputs))
 			{
-				fData->Color = col;
+				fData.Color = col;
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::InputText("##input", fData->Buffer, sizeof(fData->Buffer)))
+			if (ImGui::InputText("##input", fData.Buffer, sizeof(fData.Buffer)))
 			{
 				exprtk::parser<float> parser;
-				parser.compile(fData->Buffer, fData->Expression);
+				parser.compile(fData.Buffer, fData.Expression);
 			}
 
 			ImGui::SameLine();
@@ -95,7 +98,10 @@ namespace App {
 		}
 
 		if (indexToRemove != -1)
+		{
 			functions.erase(functions.begin() + indexToRemove);
+			xValues.erase(xValues.begin() + indexToRemove);
+		}
 
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
 		ImGui::Text("Add new:");
@@ -119,20 +125,21 @@ namespace App {
 			exprtk::expression<float> expression;
 			exprtk::parser<float> parser;
 
-			std::shared_ptr<FunctionData> fData = std::make_shared<FunctionData>();
-
-			symbolTable.add_variable("x", fData->X);
+			std::shared_ptr<float> x = std::make_shared<float>();
+			symbolTable.add_variable("x", *x);
 			symbolTable.add_constants();
 			expression.register_symbol_table(symbolTable);
 			if (parser.compile(exprCString, expression))
 			{
-				fData->Expression = expression;
-				fData->Vertices.resize(width);
+				FunctionData fData;
+				fData.Expression = expression;
+				fData.Vertices.resize(width);
 
-				strncpy_s(fData->Buffer, sizeof(fData->Buffer), exprCString, strlen(exprCString));
+				strncpy_s(fData.Buffer, sizeof(fData.Buffer), exprCString, strlen(exprCString));
 				memset(exprCString, 0, sizeof(exprCString));
 
 				functions.push_back(fData);
+				xValues.push_back(x);
 			}
 		}
 
@@ -144,7 +151,7 @@ namespace App {
 		ImGui::Begin("Debug");
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
 		for (auto& fData : functions)
-			ImGui::Text("Count: %d", fData->Vertices.getVertexCount());
+			ImGui::Text("Count: %d", fData.Vertices.getVertexCount());
 		ImGui::End();
 #endif
 	}
@@ -181,7 +188,7 @@ namespace App {
 		window->draw(grid, 4, sf::Lines);
 
 		for (auto& fData : functions)
-			window->draw(fData->Vertices);
+			window->draw(fData.Vertices);
 
 		ImGui::SFML::Render(*window);
 
