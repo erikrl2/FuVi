@@ -9,8 +9,7 @@ namespace App {
 	{
 		sf::Color Color{ -1 };
 		char Buffer[32]{};
-		float X{};
-		exprtk::expression<float> Expression;
+		exprtk::expression<float> Expression{};
 		sf::VertexArray Vertices{ sf::LineStrip };
 	};
 
@@ -33,7 +32,8 @@ namespace App {
 		int width = 1280;
 		int height = 720;
 
-		std::vector<std::shared_ptr<FunctionData>> functions;
+		std::vector<FunctionData> functions;
+		std::vector<std::shared_ptr<float>> xValues;
 		float pixelsPerUnit = 40;
 
 		sf::Vector2i graphOffset;
