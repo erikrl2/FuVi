@@ -5,16 +5,13 @@
 
 namespace App {
 
-	constexpr uint32_t Width = 1280;
-	constexpr uint32_t Height = 720;
-
 	struct FunctionData
 	{
 		sf::Color Color{ -1 };
 		char Buffer[32]{};
 		float X{};
 		exprtk::expression<float> Expression;
-		sf::Vertex Vertices[Width]{};
+		sf::VertexArray Vertices{ sf::LineStrip };
 
 		float Function(float x)
 		{
@@ -38,6 +35,9 @@ namespace App {
 		void OnEvent(sf::Event& event) override;
 	private:
 		sf::RenderWindow* window = nullptr;
+
+		int width = 1280;
+		int height = 720;
 
 		std::vector<std::shared_ptr<FunctionData>> functions;
 		float pixelsPerUnit = 40;

@@ -11,7 +11,7 @@ namespace App {
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
 		: window(renderWindow)
 	{
-		window->create(sf::VideoMode(Width, Height), "Function Visualizer",
+		window->create(sf::VideoMode(width, height), "Function Visualizer",
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
 #if NDEBUG
 		window->setVerticalSyncEnabled(true);
@@ -38,15 +38,18 @@ namespace App {
 
 		for (auto& fData : functions)
 		{
-			for (int drawX = 0; drawX < Width; drawX++)
+			if (fData->Vertices.getVertexCount() != width)
+				fData->Vertices.resize(width);
+
+			for (int drawX = 0; drawX < width; drawX++)
 			{
-				float x = (drawX - Width / 2.f) / pixelsPerUnit;
+				float x = (drawX - width / 2.f) / pixelsPerUnit;
 				x -= graphOffset.x / pixelsPerUnit;
 
 				float y = fData->Function(x);
 				y -= graphOffset.y / pixelsPerUnit;
 
-				float drawY = Height - (y * pixelsPerUnit + Height / 2.f);
+				float drawY = height - (y * pixelsPerUnit + height / 2.f);
 
 				fData->Vertices[drawX] = { {(float)drawX, drawY}, fData->Color };
 			}
@@ -90,6 +93,7 @@ namespace App {
 
 			ImGui::PopID();
 		}
+
 		if (indexToRemove != -1)
 			functions.erase(functions.begin() + indexToRemove);
 
@@ -98,18 +102,18 @@ namespace App {
 		ImGui::SameLine();
 
 		static char exprCString[32]{};
-		bool enter = false;
+		bool enterNewFunction = false;
 
 		ImGui::SetNextItemWidth(120);
 		if (ImGui::InputText("##f(x)", exprCString, sizeof(exprCString), ImGuiInputTextFlags_EnterReturnsTrue))
-			enter = true;
+			enterNewFunction = true;
 
 		ImGui::SameLine();
 
 		if (ImGui::Button("Enter"))
-			enter = true;
+			enterNewFunction = true;
 
-		if (enter)
+		if (enterNewFunction)
 		{
 			exprtk::symbol_table<float> symbolTable;
 			exprtk::expression<float> expression;
@@ -123,6 +127,7 @@ namespace App {
 			if (parser.compile(exprCString, expression))
 			{
 				fData->Expression = expression;
+				fData->Vertices.resize(width);
 
 				strncpy_s(fData->Buffer, sizeof(fData->Buffer), exprCString, strlen(exprCString));
 				memset(exprCString, 0, sizeof(exprCString));
@@ -136,9 +141,10 @@ namespace App {
 		ImGui::End();
 
 #ifdef DEBUG
-		ImGui::SetNextWindowPos({ 10, window->getSize().y - 100.f });
-		ImGui::Begin("Debug", 0, ImGuiWindowFlags_NoDecoration);
+		ImGui::Begin("Debug");
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
+		for (auto& fData : functions)
+			ImGui::Text("Count: %d", fData->Vertices.getVertexCount());
 		ImGui::End();
 #endif
 	}
@@ -160,10 +166,12 @@ namespace App {
 			dragging = false;
 		}
 
-		grid[0].position = { 0, Height / 2.f + graphOffset.y };
-		grid[1].position = { Width, Height / 2.f + graphOffset.y };
-		grid[2].position = { Width / 2.f + graphOffset.x, 0 };
-		grid[3].position = { Width / 2.f + graphOffset.x, Height };
+		float w = (float)width;
+		float h = (float)height;
+		grid[0].position = { 0, h / 2.f + graphOffset.y };
+		grid[1].position = { w, h / 2.f + graphOffset.y };
+		grid[2].position = { w / 2.f + graphOffset.x, 0 };
+		grid[3].position = { w / 2.f + graphOffset.x, h };
 	}
 
 	void Visualizer::Draw()
@@ -173,7 +181,7 @@ namespace App {
 		window->draw(grid, 4, sf::Lines);
 
 		for (auto& fData : functions)
-			window->draw(fData->Vertices, Width, sf::LinesStrip);
+			window->draw(fData->Vertices);
 
 		ImGui::SFML::Render(*window);
 
@@ -195,7 +203,9 @@ namespace App {
 		}
 		case sf::Event::Resized:
 		{
-			// TODO
+			width = event.size.width;
+			height = event.size.height;
+			window->setView(sf::View(sf::FloatRect(0, 0, (float)width, (float)height)));
 			break;
 		}
 		case sf::Event::Closed:
