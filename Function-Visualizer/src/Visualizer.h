@@ -12,12 +12,6 @@ namespace App {
 		float X{};
 		exprtk::expression<float> Expression;
 		sf::VertexArray Vertices{ sf::LineStrip };
-
-		float Function(float x)
-		{
-			X = x;
-			return Expression.value();
-		}
 	};
 
 	class Visualizer : public Application

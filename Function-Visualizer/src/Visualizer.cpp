@@ -43,10 +43,11 @@ namespace App {
 
 			for (int drawX = 0; drawX < width; drawX++)
 			{
-				float x = (drawX - width / 2.f) / pixelsPerUnit;
+				float& x = fData->X;
+				x = (drawX - width / 2.f) / pixelsPerUnit;
 				x -= graphOffset.x / pixelsPerUnit;
 
-				float y = fData->Function(x);
+				float y = fData->Expression.value();
 				y -= graphOffset.y / pixelsPerUnit;
 
 				float drawY = height - (y * pixelsPerUnit + height / 2.f);
@@ -144,7 +145,7 @@ namespace App {
 		ImGui::Begin("Debug");
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
 		for (auto& fData : functions)
-			ImGui::Text("Count: %d", fData->Vertices.getVertexCount());
+			ImGui::Text("Vertices: %d", fData->Vertices.getVertexCount());
 		ImGui::End();
 #endif
 	}
