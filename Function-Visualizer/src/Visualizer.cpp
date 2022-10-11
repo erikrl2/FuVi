@@ -80,9 +80,12 @@ namespace App {
 			{
 				fData.Color = col;
 			}
-
 			ImGui::SameLine();
 
+			ImGui::Text("%c(x) =", 'A' + (i + 5) % 26);
+
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(150);
 			if (ImGui::InputText("##input", fData.Buffer, sizeof(fData.Buffer)))
 			{
 				exprtk::parser<float> parser;
