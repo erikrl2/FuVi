@@ -131,7 +131,7 @@ namespace App {
 			}
 		}
 
-		canDragGraph = !ImGui::IsWindowHovered();
+		canDragGraph = !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
 
 		ImGui::End();
 
