@@ -1,6 +1,7 @@
-#include "pch.h"
-
 #include "Visualizer.h"
+
+#include <imgui.h>
+#include <imgui-SFML.h>
 
 #include <iostream>
 
@@ -45,7 +46,7 @@ namespace App {
 
 			for (int drawX = 0; drawX < width; drawX++)
 			{
-				float& x = *xValues[i];
+				float& x = *fData.X;
 				x = (drawX - width / 2.f) / pixelsPerUnit;
 				x -= graphOffset.x / pixelsPerUnit;
 
@@ -101,10 +102,7 @@ namespace App {
 		}
 
 		if (indexToRemove != -1)
-		{
 			functions.erase(functions.begin() + indexToRemove);
-			xValues.erase(xValues.begin() + indexToRemove);
-		}
 
 		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
 		ImGui::Text("Add new:");
@@ -128,21 +126,19 @@ namespace App {
 			exprtk::expression<float> expression;
 			exprtk::parser<float> parser;
 
-			std::shared_ptr<float> x = std::make_shared<float>();
-			symbolTable.add_variable("x", *x);
+			FunctionData fData;
+			symbolTable.add_variable("x", *fData.X);
 			symbolTable.add_constants();
 			expression.register_symbol_table(symbolTable);
 			if (parser.compile(exprCString, expression))
 			{
-				FunctionData fData;
 				fData.Expression = expression;
 				fData.Vertices.resize(width);
 
 				strncpy_s(fData.Buffer, sizeof(fData.Buffer), exprCString, strlen(exprCString));
 				memset(exprCString, 0, sizeof(exprCString));
 
-				functions.push_back(fData);
-				xValues.push_back(x);
+				functions.push_back(std::move(fData));
 			}
 		}
 
@@ -153,8 +149,10 @@ namespace App {
 #ifdef DEBUG
 		ImGui::Begin("Debug");
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
+		size_t vertexCount = 0;
 		for (auto& fData : functions)
-			ImGui::Text("Count: %d", fData.Vertices.getVertexCount());
+			vertexCount += fData.Vertices.getVertexCount();
+		ImGui::Text("Vertices: %d", vertexCount);
 		ImGui::End();
 #endif
 	}

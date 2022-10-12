@@ -1,7 +1,10 @@
 #pragma once
 
 #include "Application.h"
-#include "pch.h"
+
+#include <exprtk.hpp>
+
+#include <vector>
 
 namespace App {
 
@@ -10,6 +13,7 @@ namespace App {
 		sf::Color Color{ -1 };
 		char Buffer[32]{};
 		exprtk::expression<float> Expression{};
+		std::unique_ptr<float> X = std::make_unique<float>();
 		sf::VertexArray Vertices{ sf::LineStrip };
 	};
 
@@ -33,7 +37,6 @@ namespace App {
 		int height = 720;
 
 		std::vector<FunctionData> functions;
-		std::vector<std::shared_ptr<float>> xValues;
 		float pixelsPerUnit = 40;
 
 		sf::Vector2i graphOffset;
