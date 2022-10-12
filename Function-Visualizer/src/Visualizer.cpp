@@ -62,13 +62,53 @@ namespace App {
 
 	void Visualizer::UpdateImGui(sf::Time ts)
 	{
+#ifdef DEBUG
+		ImGui::Begin("Debug");
+		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
+		size_t vertexCount = 0;
+		for (auto& fData : functions)
+			vertexCount += fData.Vertices.getVertexCount();
+		ImGui::Text("Vertices: %d", vertexCount);
+		ImGui::End();
+#endif
+
 		ImGui::SetNextWindowPos({ 0, 0 });
-		ImGui::SetNextWindowSize({ 300, 0 });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { .5f, .5f });
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 		ImGui::PushStyleColor(ImGuiCol_TitleBg, ImGui::GetStyle().Colors[ImGuiCol_TitleBgActive]);
-		ImGui::Begin("Functions", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::PopStyleVar();
-		ImGui::PopStyleColor();
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0, 0, 0, .9f });
+
+		bool open = ImGui::Begin("Functions", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::PopStyleVar(2);
+		ImGui::PopStyleColor(2);
+
+		canDragGraph = !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
+
+		if (!open)
+		{
+			ImGui::End();
+			return;
+		}
+
+		ImGui::Text("Add new:");
+
+		ImGui::SameLine();
+
+		static char exprCString[32]{};
+		bool enterNewFunction = false;
+
+		ImGui::SetNextItemWidth(150);
+		if (ImGui::InputText("##f(x)", exprCString, sizeof(exprCString), ImGuiInputTextFlags_EnterReturnsTrue))
+			enterNewFunction = true;
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Enter"))
+			enterNewFunction = true;
+
+		ImGui::Separator();
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10);
 
 		int indexToRemove = -1;
 		for (int i = 0; i < functions.size(); i++)
@@ -76,21 +116,23 @@ namespace App {
 			auto& fData = functions[i];
 			ImGui::PushID(i);
 
-			ImVec4 col = fData.Color;
-			if (ImGui::ColorEdit3("##color", &col.x, ImGuiColorEditFlags_NoInputs))
-			{
-				fData.Color = col;
-			}
-			ImGui::SameLine();
-
 			ImGui::Text("%c(x) =", 'A' + (i + 5) % 26);
 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(150);
+
 			if (ImGui::InputText("##input", fData.Buffer, sizeof(fData.Buffer)))
 			{
 				exprtk::parser<float> parser;
 				parser.compile(fData.Buffer, fData.Expression);
+			}
+
+			ImGui::SameLine();
+
+			ImVec4 col = fData.Color;
+			if (ImGui::ColorEdit3("##color", &col.x, ImGuiColorEditFlags_NoInputs))
+			{
+				fData.Color = col;
 			}
 
 			ImGui::SameLine();
@@ -101,24 +143,10 @@ namespace App {
 			ImGui::PopID();
 		}
 
+		ImGui::End();
+
 		if (indexToRemove != -1)
 			functions.erase(functions.begin() + indexToRemove);
-
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
-		ImGui::Text("Add new:");
-		ImGui::SameLine();
-
-		static char exprCString[32]{};
-		bool enterNewFunction = false;
-
-		ImGui::SetNextItemWidth(120);
-		if (ImGui::InputText("##f(x)", exprCString, sizeof(exprCString), ImGuiInputTextFlags_EnterReturnsTrue))
-			enterNewFunction = true;
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Enter"))
-			enterNewFunction = true;
 
 		if (enterNewFunction)
 		{
@@ -141,20 +169,6 @@ namespace App {
 				functions.push_back(std::move(fData));
 			}
 		}
-
-		canDragGraph = !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
-
-		ImGui::End();
-
-#ifdef DEBUG
-		ImGui::Begin("Debug");
-		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
-		size_t vertexCount = 0;
-		for (auto& fData : functions)
-			vertexCount += fData.Vertices.getVertexCount();
-		ImGui::Text("Vertices: %d", vertexCount);
-		ImGui::End();
-#endif
 	}
 
 	void Visualizer::UpdateGraphOffset()
@@ -204,9 +218,12 @@ namespace App {
 		{
 		case sf::Event::MouseWheelScrolled:
 		{
-			static float zoom = 38.704f; // 1.1^38.704 = 40
-			zoom += event.mouseWheelScroll.delta;
-			pixelsPerUnit = powf(1.1f, zoom);
+			if (canDragGraph)
+			{
+				static float zoom = 38.704f; // 1.1^38.704 = 40
+				zoom += event.mouseWheelScroll.delta;
+				pixelsPerUnit = powf(1.1f, zoom);
+			}
 			break;
 		}
 		case sf::Event::Resized:

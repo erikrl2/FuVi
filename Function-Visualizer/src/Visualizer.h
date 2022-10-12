@@ -13,7 +13,7 @@ namespace App {
 		sf::Color Color{ -1 };
 		char Buffer[32]{};
 		exprtk::expression<float> Expression{};
-		std::unique_ptr<float> X = std::make_unique<float>();
+		std::unique_ptr<float> X{ std::make_unique<float>() };
 		sf::VertexArray Vertices{ sf::LineStrip };
 	};
 
