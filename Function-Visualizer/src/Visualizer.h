@@ -26,6 +26,8 @@ namespace App {
 		void Update(sf::Time ts) override;
 		void UpdateImGui(sf::Time ts);
 		void UpdateGraphOffset();
+		void UpdateFunctions();
+		void UpdateGridLines();
 
 		void Draw() override;
 
@@ -42,7 +44,7 @@ namespace App {
 		sf::Vector2i graphOffset;
 		bool canDragGraph = true;
 
-		sf::Vertex grid[4];
+		sf::VertexArray grid{ sf::Lines };
 	};
 
 }

@@ -20,9 +20,6 @@ namespace App {
 
 		ImGui::SFML::Init(*window);
 		ImGui::GetIO().IniFilename = nullptr;
-
-		for (int i = 0; i < 4; i++)
-			grid[i].color = { 255, 255, 255, 63 };
 	}
 
 	Visualizer::~Visualizer()
@@ -33,31 +30,10 @@ namespace App {
 	void Visualizer::Update(sf::Time ts)
 	{
 		ImGui::SFML::Update(*window, ts);
-
 		UpdateImGui(ts);
 		UpdateGraphOffset();
-
-		for (int i = 0; i < functions.size(); i++)
-		{
-			auto& fData = functions[i];
-
-			if (fData.Vertices.getVertexCount() != width)
-				fData.Vertices.resize(width);
-
-			for (int drawX = 0; drawX < width; drawX++)
-			{
-				float& x = *fData.X;
-				x = (drawX - width / 2.f) / pixelsPerUnit;
-				x -= graphOffset.x / pixelsPerUnit;
-
-				float y = fData.Expression.value();
-				y -= graphOffset.y / pixelsPerUnit;
-
-				float drawY = height - (y * pixelsPerUnit + height / 2.f);
-
-				fData.Vertices[drawX] = { {(float)drawX, drawY}, fData.Color };
-			}
-		}
+		UpdateFunctions();
+		UpdateGridLines();
 	}
 
 	void Visualizer::UpdateImGui(sf::Time ts)
@@ -187,20 +163,68 @@ namespace App {
 		{
 			dragging = false;
 		}
+	}
 
+	void Visualizer::UpdateFunctions()
+	{
+		for (auto& fData : functions)
+		{
+			if (fData.Vertices.getVertexCount() != width)
+				fData.Vertices.resize(width);
+
+			for (int drawX = 0; drawX < width; drawX++)
+			{
+				float& x = *fData.X;
+				x = (drawX - width / 2.f) / pixelsPerUnit;
+				x -= graphOffset.x / pixelsPerUnit;
+
+				float y = fData.Expression.value();
+				y -= graphOffset.y / pixelsPerUnit;
+
+				float drawY = height - (y * pixelsPerUnit + height / 2.f);
+
+				fData.Vertices[drawX] = { {(float)drawX, drawY}, fData.Color };
+			}
+		}
+	}
+
+	void Visualizer::UpdateGridLines()
+	{
+		int rows = 4;
+		int cols = 4;
+		int numLines = rows + cols - 2;
 		float w = (float)width;
 		float h = (float)height;
-		grid[0].position = { 0, h / 2.f + graphOffset.y };
-		grid[1].position = { w, h / 2.f + graphOffset.y };
-		grid[2].position = { w / 2.f + graphOffset.x, 0 };
-		grid[3].position = { w / 2.f + graphOffset.x, h };
+		float rowH = h / rows;
+		float colW = w / cols;
+
+		grid.resize((size_t)2 * numLines);
+
+		// Rows
+		for (int i = 0; i < rows - 1; i++) {
+			int r = i + 1;
+			float rowY = rowH * r;
+			grid[i * 2].position = { 0, rowY + graphOffset.y };
+			grid[i * 2 + 1].position = { w, rowY + graphOffset.y };
+		}
+
+		// Columns
+		for (int i = rows - 1; i < numLines; i++) {
+			int c = i - rows + 2;
+			float colX = colW * c;
+			grid[i * 2].position = { colX + graphOffset.x, 0 };
+			grid[i * 2 + 1].position = { colX + graphOffset.x, h };
+		}
+
+		for (int i = 0; i < grid.getVertexCount(); i++)
+			grid[i].color.a = 60;
 	}
 
 	void Visualizer::Draw()
 	{
 		window->clear();
 
-		window->draw(grid, 4, sf::Lines);
+		window->draw(grid);
 
 		for (auto& fData : functions)
 			window->draw(fData.Vertices);
