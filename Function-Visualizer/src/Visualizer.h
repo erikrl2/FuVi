@@ -24,25 +24,28 @@ namespace App {
 		~Visualizer() override;
 
 		void Update(sf::Time ts) override;
+		void Draw() override;
+		void OnEvent(sf::Event& event) override;
+	private:
 		void UpdateImGui(sf::Time ts);
 		void UpdateGraphOffset();
 		void UpdateFunctions();
 		void UpdateGridLines();
 
-		void Draw() override;
-
-		void OnEvent(sf::Event& event) override;
+		float GetGridCellSize();
 	private:
-		sf::RenderWindow* window = nullptr;
+		sf::RenderWindow* window;
 
 		int width = 1280;
 		int height = 720;
 
-		std::vector<FunctionData> functions;
-		float pixelsPerUnit = 40;
+		const float baseUnit = 80;
+		float pixelsPerUnit = baseUnit;
 
 		sf::Vector2i graphOffset;
 		bool canDragGraph = true;
+
+		std::vector<FunctionData> functions;
 
 		sf::VertexArray grid{ sf::Lines };
 	};

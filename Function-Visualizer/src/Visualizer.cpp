@@ -39,12 +39,13 @@ namespace App {
 	void Visualizer::UpdateImGui(sf::Time ts)
 	{
 #ifdef DEBUG
-		ImGui::Begin("Debug");
+		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
-		size_t vertexCount = 0;
+		size_t vertexCount = grid.getVertexCount();
 		for (auto& fData : functions)
 			vertexCount += fData.Vertices.getVertexCount();
 		ImGui::Text("Vertices: %d", vertexCount);
+		ImGui::Text("pixelsPerUnit: %f", pixelsPerUnit);
 		ImGui::End();
 #endif
 
@@ -190,34 +191,70 @@ namespace App {
 
 	void Visualizer::UpdateGridLines()
 	{
-		int rows = 4;
-		int cols = 4;
-		int numLines = rows + cols - 2;
 		float w = (float)width;
 		float h = (float)height;
-		float rowH = h / rows;
-		float colW = w / cols;
+		sf::Vector2i center(int(w / 2), int(h / 2));
+		center += graphOffset;
 
-		grid.resize((size_t)2 * numLines);
+		float cellSize = GetGridCellSize();
 
-		// Rows
-		for (int i = 0; i < rows - 1; i++) {
-			int r = i + 1;
-			float rowY = rowH * r;
-			grid[i * 2].position = { 0, rowY + graphOffset.y };
-			grid[i * 2 + 1].position = { w, rowY + graphOffset.y };
+		int rowLines = (int)ceilf(h / cellSize);
+		int colLines = (int)ceilf(w / cellSize);
+		if (rowLines % 2 == 0) rowLines++;
+		if (colLines % 2 == 0) colLines++;
+
+		grid.resize(rowLines * 2 + colLines * 2);
+
+		float rowYStart = center.y - cellSize * (int)(rowLines / 2.f);
+		for (int i = 0; i < rowLines; i++)
+		{
+			int gridIndex = i * 2;
+			int gridOffset = (int)roundf(graphOffset.y / cellSize);
+			float rowY = rowYStart + cellSize * (i - gridOffset);
+
+			grid[gridIndex].position = { 0, rowY };
+			grid[gridIndex + 1].position = { w, rowY };
+
+			sf::Uint8 alpha = (int)rowY == center.y ? 64 :
+				((int)((rowLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+
+			grid[gridIndex].color.a = alpha;
+			grid[gridIndex + 1].color.a = alpha;
 		}
 
-		// Columns
-		for (int i = rows - 1; i < numLines; i++) {
-			int c = i - rows + 2;
-			float colX = colW * c;
-			grid[i * 2].position = { colX + graphOffset.x, 0 };
-			grid[i * 2 + 1].position = { colX + graphOffset.x, h };
+		float colYStart = center.x - cellSize * (int)(colLines / 2.f);
+		for (int i = 0; i < colLines; i++)
+		{
+			int gridIndex = rowLines * 2 + i * 2;
+			int gridOffset = (int)roundf(graphOffset.x / cellSize);
+			float colX = colYStart + cellSize * (i - gridOffset);
+
+			grid[gridIndex].position = { colX, 0 };
+			grid[gridIndex + 1].position = { colX, h };
+
+			sf::Uint8 alpha = (int)colX == center.x ? 64 :
+				((int)((colLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+
+			grid[gridIndex].color.a = alpha;
+			grid[gridIndex + 1].color.a = alpha;
+		}
+	}
+
+	float Visualizer::GetGridCellSize()
+	{
+		float cellSize = pixelsPerUnit;
+		uint64_t factor = 1;
+
+		while (pixelsPerUnit < baseUnit / factor)
+		{
+			factor <<= 1;
+			cellSize = pixelsPerUnit * factor;
 		}
 
-		for (int i = 0; i < grid.getVertexCount(); i++)
-			grid[i].color.a = 60;
+		while (pixelsPerUnit >= baseUnit * (factor <<= 1))
+			cellSize = pixelsPerUnit / factor;
+
+		return cellSize / 2;
 	}
 
 	void Visualizer::Draw()
@@ -242,12 +279,14 @@ namespace App {
 		{
 		case sf::Event::MouseWheelScrolled:
 		{
-			if (canDragGraph)
-			{
-				static float zoom = 38.704f; // 1.1^38.704 = 40
-				zoom += event.mouseWheelScroll.delta;
-				pixelsPerUnit = powf(1.1f, zoom);
-			}
+			static float zoom = logf(baseUnit) / logf(1.1f);
+			float dir = event.mouseWheelScroll.delta;
+
+			if (pixelsPerUnit < baseUnit / ((uint64_t)1 << 62) && dir < 0) break;
+			if (pixelsPerUnit >= baseUnit * ((uint64_t)1 << 62) && dir > 0) break;
+
+			zoom += dir;
+			pixelsPerUnit = powf(1.1f, zoom);
 			break;
 		}
 		case sf::Event::Resized:
