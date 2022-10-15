@@ -1,6 +1,6 @@
 # FuVi
 
-Function visualizer, built with [sfml](https://github.com/SFML/SFML) and [imgui](https://github.com/ocornut/imgui).
+Graphing Calculator (or Function Visualizer), built with [sfml](https://github.com/SFML/SFML) and [imgui](https://github.com/ocornut/imgui).
 
 ## Get Started
 
@@ -10,4 +10,5 @@ Function visualizer, built with [sfml](https://github.com/SFML/SFML) and [imgui]
 
 ---
 
-![FuVi](https://user-images.githubusercontent.com/92889691/195346716-bd4f04a2-86d1-4f73-8193-88aefd3c64bb.png)
+![FuVi](https://user-images.githubusercontent.com/92889691/195995080-4ab7174d-4ad8-442e-bda2-7d4cdc4a35d6.png)
+
