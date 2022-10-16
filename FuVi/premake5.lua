@@ -1,6 +1,6 @@
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
-project "Function-Visualizer"
+project "FuVi"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"

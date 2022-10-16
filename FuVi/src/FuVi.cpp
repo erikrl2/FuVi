@@ -1,18 +1,16 @@
-#include "Visualizer.h"
+#include "FuVi.h"
 
 #include <imgui.h>
 #include <imgui-SFML.h>
 
 #include <iostream>
 
-// TODO: Remove unused static libs
-
 namespace App {
 
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
 		: window(renderWindow)
 	{
-		window->create(sf::VideoMode(width, height), "Function Visualizer",
+		window->create(sf::VideoMode(width, height), "FuVi - Graphing Calculator",
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
 #if NDEBUG
 		window->setVerticalSyncEnabled(true);

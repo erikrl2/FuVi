@@ -1,10 +1,10 @@
-workspace "Function-Visualizer"
+workspace "FuVi"
 	architecture "x86_64"
 	configurations { "Debug", "Release", }
-	startproject "Function-Visualizer"
+	startproject "FuVi"
 
 group "Dependencies"
-	include "Function-Visualizer/vendor/imgui-sfml"
+	include "FuVi/vendor/imgui-sfml"
 group ""
 
-include "Function-Visualizer"
+include "FuVi"
