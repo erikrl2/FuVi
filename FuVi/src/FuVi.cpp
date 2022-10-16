@@ -5,6 +5,13 @@
 
 #include <iostream>
 
+#ifdef NDEBUG
+#include <Windows.h>
+#define MAIN() wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE previousInstance, _In_ PWSTR arguments, _In_ int commandShow)
+#else
+#define MAIN() main(int argc, char** argv)
+#endif
+
 namespace App {
 
 	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
@@ -312,7 +319,7 @@ namespace App {
 
 }
 
-int main(int argc, char** argv)
+int MAIN()
 {
 	Application::Launch<App::Visualizer>();
 	return 0;

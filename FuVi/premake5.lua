@@ -62,6 +62,7 @@ project "FuVi"
 		}
 
 	filter "configurations:Release"
+		kind "WindowedApp"
 		runtime "Release"
 		optimize "On"
 
