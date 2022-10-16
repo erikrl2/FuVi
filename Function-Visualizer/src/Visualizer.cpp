@@ -38,17 +38,6 @@ namespace App {
 
 	void Visualizer::UpdateImGui(sf::Time ts)
 	{
-#ifdef DEBUG
-		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize);
-		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
-		size_t vertexCount = grid.getVertexCount();
-		for (auto& fData : functions)
-			vertexCount += fData.Vertices.getVertexCount();
-		ImGui::Text("Vertices: %d", vertexCount);
-		ImGui::Text("pixelsPerUnit: %f", pixelsPerUnit);
-		ImGui::End();
-#endif
-
 		ImGui::SetNextWindowPos({ 0, 0 });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { .5f, .5f });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
@@ -60,7 +49,7 @@ namespace App {
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 
-		canDragGraph = !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
+		canDragGraph = canDragGraph && !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
 
 		if (!open)
 		{
@@ -68,7 +57,7 @@ namespace App {
 			return;
 		}
 
-		ImGui::Text("Add new:");
+		ImGui::Text("%c(x) =", 'A' + (functions.size() + 5) % 26);
 
 		ImGui::SameLine();
 
@@ -76,7 +65,7 @@ namespace App {
 		bool enterNewFunction = false;
 
 		ImGui::SetNextItemWidth(150);
-		if (ImGui::InputText("##f(x)", exprCString, sizeof(exprCString), ImGuiInputTextFlags_EnterReturnsTrue))
+		if (ImGui::InputText("##function", exprCString, sizeof(exprCString), ImGuiInputTextFlags_EnterReturnsTrue))
 			enterNewFunction = true;
 
 		ImGui::SameLine();
@@ -146,6 +135,17 @@ namespace App {
 				functions.push_back(std::move(fData));
 			}
 		}
+
+#ifdef DEBUG
+		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
+		size_t vertexCount = grid.getVertexCount();
+		for (auto& fData : functions)
+			vertexCount += fData.Vertices.getVertexCount();
+		ImGui::Text("Vertices: %d", vertexCount);
+		ImGui::Text("PixelsPerUnit: %f", pixelsPerUnit);
+		ImGui::End();
+#endif
 	}
 
 	void Visualizer::UpdateGraphOffset()
@@ -162,7 +162,7 @@ namespace App {
 		}
 		else
 		{
-			dragging = false;
+			canDragGraph = dragging = false;
 		}
 	}
 
@@ -203,40 +203,38 @@ namespace App {
 		if (rowLines % 2 == 0) rowLines++;
 		if (colLines % 2 == 0) colLines++;
 
-		grid.resize(rowLines * 2 + colLines * 2);
+		grid.resize((size_t)(rowLines * 2 + colLines * 2));
 
-		float rowYStart = center.y - cellSize * (int)(rowLines / 2.f);
+		float rowYStart = center.y - cellSize * int(rowLines / 2.f);
 		for (int i = 0; i < rowLines; i++)
 		{
 			int gridIndex = i * 2;
 			int gridOffset = (int)roundf(graphOffset.y / cellSize);
 			float rowY = rowYStart + cellSize * (i - gridOffset);
 
-			grid[gridIndex].position = { 0, rowY };
-			grid[gridIndex + 1].position = { w, rowY };
+			grid[(size_t)gridIndex].position = { 0, rowY };
+			grid[(size_t)gridIndex + 1].position = { w, rowY };
 
 			sf::Uint8 alpha = (int)rowY == center.y ? 64 :
-				((int)((rowLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
-
-			grid[gridIndex].color.a = alpha;
-			grid[gridIndex + 1].color.a = alpha;
+				(int((rowLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+			grid[(size_t)gridIndex].color.a = alpha;
+			grid[(size_t)gridIndex + 1].color.a = alpha;
 		}
 
-		float colYStart = center.x - cellSize * (int)(colLines / 2.f);
+		float colYStart = center.x - cellSize * int(colLines / 2.f);
 		for (int i = 0; i < colLines; i++)
 		{
 			int gridIndex = rowLines * 2 + i * 2;
 			int gridOffset = (int)roundf(graphOffset.x / cellSize);
 			float colX = colYStart + cellSize * (i - gridOffset);
 
-			grid[gridIndex].position = { colX, 0 };
-			grid[gridIndex + 1].position = { colX, h };
+			grid[(size_t)gridIndex].position = { colX, 0 };
+			grid[(size_t)gridIndex + 1].position = { colX, h };
 
 			sf::Uint8 alpha = (int)colX == center.x ? 64 :
-				((int)((colLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
-
-			grid[gridIndex].color.a = alpha;
-			grid[gridIndex + 1].color.a = alpha;
+				(int((colLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+			grid[(size_t)gridIndex].color.a = alpha;
+			grid[(size_t)gridIndex + 1].color.a = alpha;
 		}
 	}
 
@@ -277,6 +275,16 @@ namespace App {
 
 		switch (event.type)
 		{
+		case sf::Event::MouseButtonPressed:
+		{
+			auto mouse = event.mouseButton;
+			if (mouse.button == sf::Mouse::Left)
+			{
+				canDragGraph = mouse.x >= 0 && mouse.x < width
+					&& mouse.y >= 0 && mouse.y < height;
+			}
+			break;
+		}
 		case sf::Event::MouseWheelScrolled:
 		{
 			static float zoom = logf(baseUnit) / logf(1.1f);

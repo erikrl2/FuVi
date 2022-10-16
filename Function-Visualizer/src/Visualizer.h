@@ -43,7 +43,7 @@ namespace App {
 		float pixelsPerUnit = baseUnit;
 
 		sf::Vector2i graphOffset;
-		bool canDragGraph = true;
+		bool canDragGraph = false;
 
 		std::vector<FunctionData> functions;
 
