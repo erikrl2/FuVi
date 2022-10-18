@@ -30,7 +30,7 @@ namespace App {
 		void UpdateImGui(sf::Time ts);
 		void UpdateGraphOffset();
 		void UpdateFunctions();
-		void UpdateGridLines();
+		void UpdateGrid();
 
 		float GetGridCellSize();
 	private:
@@ -48,6 +48,9 @@ namespace App {
 		std::vector<FunctionData> functions;
 
 		sf::VertexArray grid{ sf::Lines };
+
+		sf::Font font;
+		std::vector<sf::Text> gridNumbers;
 	};
 
 }

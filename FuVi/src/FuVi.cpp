@@ -25,6 +25,8 @@ namespace App {
 
 		ImGui::SFML::Init(*window);
 		ImGui::GetIO().IniFilename = nullptr;
+
+		font.loadFromFile("assets/fonts/OpenSans/OpenSans-Medium.ttf");
 	}
 
 	Visualizer::~Visualizer()
@@ -38,7 +40,7 @@ namespace App {
 		UpdateImGui(ts);
 		UpdateGraphOffset();
 		UpdateFunctions();
-		UpdateGridLines();
+		UpdateGrid();
 	}
 
 	void Visualizer::UpdateImGui(sf::Time ts)
@@ -194,7 +196,7 @@ namespace App {
 		}
 	}
 
-	void Visualizer::UpdateGridLines()
+	void Visualizer::UpdateGrid()
 	{
 		float w = (float)width;
 		float h = (float)height;
@@ -209,6 +211,8 @@ namespace App {
 		if (colLines % 2 == 0) colLines++;
 
 		grid.resize((size_t)(rowLines * 2 + colLines * 2));
+		gridNumbers.clear(); // test out
+		gridNumbers.reserve((size_t)rowLines + colLines);
 
 		float rowYStart = center.y - cellSize * int(rowLines / 2.f);
 		for (int i = 0; i < rowLines; i++)
@@ -220,10 +224,15 @@ namespace App {
 			grid[(size_t)gridIndex].position = { 0, rowY };
 			grid[(size_t)gridIndex + 1].position = { w, rowY };
 
-			sf::Uint8 alpha = (int)rowY == center.y ? 64 :
-				(int((rowLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+			int gridNumber = (int((rowLines - 1) / 2.f) - (i - gridOffset));
+
+			sf::Uint8 alpha = (int)rowY == center.y ? 64 : gridNumber % 2 == 0 ? 32 : 16;
 			grid[(size_t)gridIndex].color.a = alpha;
 			grid[(size_t)gridIndex + 1].color.a = alpha;
+
+			sf::Text number(std::to_string(gridNumber), font, 14);
+			number.setPosition({ w / 2 + graphOffset.x, rowY }); // y: min 0 and max w
+			gridNumbers.insert(gridNumbers.begin() + i, number);
 		}
 
 		float colYStart = center.x - cellSize * int(colLines / 2.f);
@@ -236,10 +245,16 @@ namespace App {
 			grid[(size_t)gridIndex].position = { colX, 0 };
 			grid[(size_t)gridIndex + 1].position = { colX, h };
 
-			sf::Uint8 alpha = (int)colX == center.x ? 64 :
-				(int((colLines - 1) / 2.f) - (i - gridOffset)) % 2 == 0 ? 32 : 16;
+			int gridNumber = (int((colLines - 1) / 2.f) - (i - gridOffset)) * -1;
+
+			sf::Uint8 alpha = (int)colX == center.x ? 64 : gridNumber % 2 == 0 ? 32 : 16;
 			grid[(size_t)gridIndex].color.a = alpha;
 			grid[(size_t)gridIndex + 1].color.a = alpha;
+
+			int numberIndex = rowLines + i;
+			sf::Text number(std::to_string(gridNumber), font, 14);
+			number.setPosition({ colX, h / 2 + graphOffset.y }); // x: min 0 and max h
+			gridNumbers.insert(gridNumbers.begin() + numberIndex, number);
 		}
 	}
 
@@ -265,6 +280,9 @@ namespace App {
 		window->clear();
 
 		window->draw(grid);
+
+		for (auto& text : gridNumbers)
+			window->draw(text);
 
 		for (auto& fData : functions)
 			window->draw(fData.Vertices);
