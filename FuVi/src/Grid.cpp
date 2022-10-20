@@ -3,13 +3,13 @@
 namespace App {
 
 	GridNumber::GridNumber(double number, int precision, const sf::Font& font)
-		: text("", font, 14)
+		: Text("", font, 14)
 	{
 		char format[] = "%.0f";
 		format[2] = '0' + std::max(0, std::min(7, precision));
 		char numberString[32]{};
 		sprintf_s(numberString, sizeof(numberString), format, number);
-		text.setString(numberString);
+		Text.setString(numberString);
 
 		textWidth = strnlen_s(numberString, sizeof(numberString)) * 8.f;
 	}
@@ -18,7 +18,7 @@ namespace App {
 	{
 		float x = isYAxis ? std::max(bounds.left, std::min(bounds.width - textWidth, pos.x - textWidth)) : pos.x - textWidth / 2;
 		float y = !isYAxis ? std::max(bounds.top, std::min(bounds.height - 16, pos.y)) : pos.y - 8;
-		text.setPosition(x, y);
+		Text.setPosition(x, y);
 	}
 
 	Grid::Grid(sf::RenderWindow* window)
@@ -80,8 +80,8 @@ namespace App {
 			{
 				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
 				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
-				number.SetPositionWithinBounds({ width / 2 + offset.x, rowY }, { 10, 10, width - 10, height - 10 });
-				numbers[numberIndex++] = number;
+				number.SetPositionWithinBounds({ width / 2 + offset.x, rowY }, { 10, 10, width - 10, height - 10 }, true);
+				numbers[numberIndex++] = number.Text;
 			}
 		}
 
@@ -104,7 +104,7 @@ namespace App {
 				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
 				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
 				number.SetPositionWithinBounds({ colX, height / 2 + offset.y }, { 10, 10, width - 10, height - 10 }, false);
-				numbers[numberIndex++] = number;
+				numbers[numberIndex++] = number.Text;
 			}
 		}
 		sf::Text number("0", font, 14);

@@ -6,14 +6,13 @@
 
 namespace App {
 
-	class GridNumber
+	struct GridNumber
 	{
-	public:
+		sf::Text Text;
+
 		GridNumber(double number, int precision, const sf::Font& font);
-		void SetPositionWithinBounds(sf::Vector2f pos, const sf::FloatRect& bounds, bool isYAxis = true);
-		operator sf::Text() { return text; }
+		void SetPositionWithinBounds(sf::Vector2f pos, const sf::FloatRect& bounds, bool isYAxis);
 	private:
-		sf::Text text;
 		float textWidth{};
 	};
 
