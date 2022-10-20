@@ -10,5 +10,5 @@ Graphing Calculator (or Function Visualizer), built with [sfml](https://github.c
 
 ---
 
-![FuVi](https://user-images.githubusercontent.com/92889691/195995080-4ab7174d-4ad8-442e-bda2-7d4cdc4a35d6.png)
+![FuVi](https://user-images.githubusercontent.com/92889691/196988779-5ab61c48-9671-4312-884f-2802d1444458.png)
 
