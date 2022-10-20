@@ -45,11 +45,11 @@ namespace App {
 		float textWidth{};
 	};
 
-	class Visualizer : public Application
+	class FuVi : public Application
 	{
 	public:
-		Visualizer(sf::RenderWindow* renderWindow);
-		~Visualizer() override;
+		FuVi(sf::RenderWindow* renderWindow);
+		~FuVi() override;
 
 		void Update(sf::Time ts) override;
 		void Draw() override;

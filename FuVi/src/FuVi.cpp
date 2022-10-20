@@ -4,7 +4,6 @@
 #include <imgui-SFML.h>
 
 #include <iostream>
-#include <format>
 
 #ifdef NDEBUG
 #include <Windows.h>
@@ -15,7 +14,7 @@
 
 namespace App {
 
-	Visualizer::Visualizer(sf::RenderWindow* renderWindow)
+	FuVi::FuVi(sf::RenderWindow* renderWindow)
 		: window(renderWindow)
 	{
 		window->create(sf::VideoMode(width, height), "FuVi - Graphing Calculator",
@@ -30,12 +29,12 @@ namespace App {
 		font.loadFromFile("assets/fonts/OpenSans/OpenSans-Medium.ttf");
 	}
 
-	Visualizer::~Visualizer()
+	FuVi::~FuVi()
 	{
 		ImGui::SFML::Shutdown(*window);
 	}
 
-	void Visualizer::Update(sf::Time ts)
+	void FuVi::Update(sf::Time ts)
 	{
 		ImGui::SFML::Update(*window, ts);
 		UpdateImGui(ts);
@@ -44,7 +43,7 @@ namespace App {
 		UpdateGrid();
 	}
 
-	void Visualizer::UpdateImGui(sf::Time ts)
+	void FuVi::UpdateImGui(sf::Time ts)
 	{
 		ImGui::SetNextWindowPos({ 0, 0 });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, { .5f, .5f });
@@ -157,7 +156,7 @@ namespace App {
 #endif
 	}
 
-	void Visualizer::UpdateGraphOffset()
+	void FuVi::UpdateGraphOffset()
 	{
 		static bool dragging = false;
 		static sf::Vector2i lastPos;
@@ -175,7 +174,7 @@ namespace App {
 		}
 	}
 
-	void Visualizer::UpdateFunctions()
+	void FuVi::UpdateFunctions()
 	{
 		for (auto& fData : functions)
 		{
@@ -198,7 +197,7 @@ namespace App {
 		}
 	}
 
-	void Visualizer::UpdateGrid()
+	void FuVi::UpdateGrid()
 	{
 		float w = (float)width;
 		float h = (float)height;
@@ -280,7 +279,7 @@ namespace App {
 		gridNumbers[numberIndex] = number;
 	}
 
-	float Visualizer::GetGridCellSize()
+	float FuVi::GetGridCellSize()
 	{
 		float unitCellSize = pixelsPerUnit;
 		uint64_t factor = 1;
@@ -308,7 +307,7 @@ namespace App {
 		return unitCellSize / 2;
 	}
 
-	void Visualizer::Draw()
+	void FuVi::Draw()
 	{
 		window->clear();
 
@@ -325,7 +324,7 @@ namespace App {
 		window->display();
 	}
 
-	void Visualizer::OnEvent(sf::Event& event)
+	void FuVi::OnEvent(sf::Event& event)
 	{
 		ImGui::SFML::ProcessEvent(event);
 
@@ -372,6 +371,6 @@ namespace App {
 
 int MAIN()
 {
-	Application::Launch<App::Visualizer>();
+	Application::Launch<App::FuVi>();
 	return 0;
 }
