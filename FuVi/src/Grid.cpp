@@ -2,29 +2,10 @@
 
 namespace App {
 
-	GridNumber::GridNumber(double number, int precision, const sf::Font& font)
-		: Text("", font, 14)
-	{
-		char format[] = "%.0f";
-		format[2] = '0' + std::max(0, std::min(7, precision));
-		char numberString[32]{};
-		sprintf_s(numberString, sizeof(numberString), format, number);
-		Text.setString(numberString);
-
-		textWidth = strnlen_s(numberString, sizeof(numberString)) * 8.f;
-	}
-
-	void GridNumber::SetPositionWithinBounds(sf::Vector2f pos, const sf::FloatRect& bounds, bool isYAxis)
-	{
-		float x = isYAxis ? std::max(bounds.left, std::min(bounds.width - textWidth, pos.x - textWidth)) : pos.x - textWidth / 2;
-		float y = !isYAxis ? std::max(bounds.top, std::min(bounds.height - 16, pos.y)) : pos.y - 8;
-		Text.setPosition(x, y);
-	}
-
 	Grid::Grid(sf::RenderWindow* window)
 		: window(window)
 	{
-		font.loadFromFile("assets/fonts/OpenSans/OpenSans-Medium.ttf");
+		font.loadFromFile("c:/windows/fonts/consola.ttf");
 	}
 
 	void Grid::Update()
@@ -194,6 +175,25 @@ namespace App {
 
 		for (auto& text : numbers)
 			window->draw(text);
+	}
+
+	GridNumber::GridNumber(double number, int precision, const sf::Font& font)
+		: Text("", font, 14)
+	{
+		char format[] = "%.0f";
+		format[2] = '0' + std::max(0, std::min(7, precision));
+		char numberString[32]{};
+		sprintf_s(numberString, sizeof(numberString), format, number);
+		Text.setString(numberString);
+
+		textWidth = strnlen_s(numberString, sizeof(numberString)) * 8.f;
+	}
+
+	void GridNumber::SetPositionWithinBounds(sf::Vector2f pos, const sf::FloatRect& bounds, bool isYAxis)
+	{
+		float x = isYAxis ? std::max(bounds.left, std::min(bounds.width - textWidth, pos.x - textWidth)) : pos.x - textWidth / 2;
+		float y = !isYAxis ? std::max(bounds.top, std::min(bounds.height - 16, pos.y)) : pos.y - 8;
+		Text.setPosition(x, y);
 	}
 
 }
