@@ -4,6 +4,7 @@
 #include <imgui-SFML.h>
 
 #include <iostream>
+#include <format>
 
 #ifdef NDEBUG
 #include <Windows.h>
@@ -146,11 +147,12 @@ namespace App {
 #ifdef DEBUG
 		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
-		size_t vertexCount = grid.getVertexCount();
+		size_t vertexCount = gridLines.getVertexCount();
 		for (auto& fData : functions)
 			vertexCount += fData.Vertices.getVertexCount();
 		ImGui::Text("Vertices: %d", vertexCount);
 		ImGui::Text("PixelsPerUnit: %f", pixelsPerUnit);
+		ImGui::Text("ZoomFactor: %f", zoomFactor);
 		ImGui::End();
 #endif
 	}
@@ -209,77 +211,108 @@ namespace App {
 		int colLines = (int)ceilf(w / cellSize);
 		if (rowLines % 2 == 0) rowLines++;
 		if (colLines % 2 == 0) colLines++;
+		int rowLinesHalf = rowLines >> 1;
+		int colLinesHalf = colLines >> 1;
 
-		grid.resize((size_t)(rowLines * 2 + colLines * 2));
-		gridNumbers.clear(); // test out
-		gridNumbers.reserve((size_t)rowLines + colLines);
+		float rowYStart = center.y - cellSize * rowLinesHalf;
+		float colXStart = center.x - cellSize * colLinesHalf;
+		int cellOffsetY = (int)roundf(graphOffset.y / cellSize);
+		int cellOffsetX = (int)roundf(graphOffset.x / cellSize);
 
-		float rowYStart = center.y - cellSize * int(rowLines / 2.f);
+		int numberIndex = 0;
+		int rowNumberCount = rowLinesHalf;
+		int colNumberCount = colLinesHalf;
+		if ((rowLinesHalf + cellOffsetY) % 2) rowNumberCount--;
+		if ((colLinesHalf + cellOffsetX) % 2) colNumberCount--;
+		if (abs(cellOffsetY) > rowLinesHalf) rowNumberCount++;
+		if (abs(cellOffsetX) > colLinesHalf) colNumberCount++;
+
+		gridLines.resize((size_t)(rowLines * 2 + colLines * 2));
+		gridNumbers.resize((size_t)rowNumberCount + colNumberCount + 1);
+
 		for (int i = 0; i < rowLines; i++)
 		{
 			int gridIndex = i * 2;
-			int gridOffset = (int)roundf(graphOffset.y / cellSize);
-			float rowY = rowYStart + cellSize * (i - gridOffset);
+			float rowY = rowYStart + cellSize * (i - cellOffsetY);
 
-			grid[(size_t)gridIndex].position = { 0, rowY };
-			grid[(size_t)gridIndex + 1].position = { w, rowY };
+			gridLines[(size_t)gridIndex].position = { 0, rowY };
+			gridLines[(size_t)gridIndex + 1].position = { w, rowY };
 
-			int gridNumber = (int((rowLines - 1) / 2.f) - (i - gridOffset));
+			int gridNumber = rowLinesHalf - (i - cellOffsetY);
 
 			sf::Uint8 alpha = (int)rowY == center.y ? 64 : gridNumber % 2 == 0 ? 32 : 16;
-			grid[(size_t)gridIndex].color.a = alpha;
-			grid[(size_t)gridIndex + 1].color.a = alpha;
+			gridLines[(size_t)gridIndex].color.a = alpha;
+			gridLines[(size_t)gridIndex + 1].color.a = alpha;
 
-			sf::Text number(std::to_string(gridNumber), font, 14);
-			number.setPosition({ w / 2 + graphOffset.x, rowY }); // y: min 0 and max w
-			gridNumbers.insert(gridNumbers.begin() + i, number);
+			if (gridNumber % 2 == 0 && gridNumber != 0)
+			{
+				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
+				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
+				number.SetPositionWithinBounds({ w / 2 + graphOffset.x, rowY }, { 10, 10, w - 10, h - 10 });
+				gridNumbers[numberIndex++] = number;
+			}
 		}
 
-		float colYStart = center.x - cellSize * int(colLines / 2.f);
 		for (int i = 0; i < colLines; i++)
 		{
 			int gridIndex = rowLines * 2 + i * 2;
-			int gridOffset = (int)roundf(graphOffset.x / cellSize);
-			float colX = colYStart + cellSize * (i - gridOffset);
+			float colX = colXStart + cellSize * (i - cellOffsetX);
 
-			grid[(size_t)gridIndex].position = { colX, 0 };
-			grid[(size_t)gridIndex + 1].position = { colX, h };
+			gridLines[(size_t)gridIndex].position = { colX, 0 };
+			gridLines[(size_t)gridIndex + 1].position = { colX, h };
 
-			int gridNumber = (int((colLines - 1) / 2.f) - (i - gridOffset)) * -1;
+			int gridNumber = (colLinesHalf - (i - cellOffsetX)) * -1;
 
 			sf::Uint8 alpha = (int)colX == center.x ? 64 : gridNumber % 2 == 0 ? 32 : 16;
-			grid[(size_t)gridIndex].color.a = alpha;
-			grid[(size_t)gridIndex + 1].color.a = alpha;
+			gridLines[(size_t)gridIndex].color.a = alpha;
+			gridLines[(size_t)gridIndex + 1].color.a = alpha;
 
-			int numberIndex = rowLines + i;
-			sf::Text number(std::to_string(gridNumber), font, 14);
-			number.setPosition({ colX, h / 2 + graphOffset.y }); // x: min 0 and max h
-			gridNumbers.insert(gridNumbers.begin() + numberIndex, number);
+			if (gridNumber % 2 == 0 && gridNumber != 0)
+			{
+				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
+				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
+				number.SetPositionWithinBounds({ colX, h / 2 + graphOffset.y }, { 10, 10, w - 10, h - 10 }, false);
+				gridNumbers[numberIndex++] = number;
+			}
 		}
+		sf::Text number("0", font, 14);
+		number.setPosition({ w / 2 + graphOffset.x - 8, h / 2 + graphOffset.y });
+		gridNumbers[numberIndex] = number;
 	}
 
 	float Visualizer::GetGridCellSize()
 	{
-		float cellSize = pixelsPerUnit;
+		float unitCellSize = pixelsPerUnit;
 		uint64_t factor = 1;
 
 		while (pixelsPerUnit < baseUnit / factor)
 		{
 			factor <<= 1;
-			cellSize = pixelsPerUnit * factor;
+			unitCellSize = pixelsPerUnit * factor;
 		}
 
-		while (pixelsPerUnit >= baseUnit * (factor <<= 1))
-			cellSize = pixelsPerUnit / factor;
+		if (factor > 1)
+		{
+			zoomFactor = (double)factor;
+			return unitCellSize / 2;
+		}
 
-		return cellSize / 2;
+		while (pixelsPerUnit >= baseUnit * (factor << 1))
+		{
+			factor <<= 1;
+			unitCellSize = pixelsPerUnit / factor;
+		}
+
+		zoomFactor = 1.0 / factor;
+
+		return unitCellSize / 2;
 	}
 
 	void Visualizer::Draw()
 	{
 		window->clear();
 
-		window->draw(grid);
+		window->draw(gridLines);
 
 		for (auto& text : gridNumbers)
 			window->draw(text);
