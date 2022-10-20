@@ -15,7 +15,7 @@
 namespace App {
 
 	FuVi::FuVi(sf::RenderWindow* renderWindow)
-		: window(renderWindow)
+		: window(renderWindow), grid(renderWindow)
 	{
 		window->create(sf::VideoMode(width, height), "FuVi - Graphing Calculator",
 			sf::Style::Default, sf::ContextSettings(0, 0, 4));
@@ -25,8 +25,6 @@ namespace App {
 
 		ImGui::SFML::Init(*window);
 		ImGui::GetIO().IniFilename = nullptr;
-
-		font.loadFromFile("assets/fonts/OpenSans/OpenSans-Medium.ttf");
 	}
 
 	FuVi::~FuVi()
@@ -38,9 +36,8 @@ namespace App {
 	{
 		ImGui::SFML::Update(*window, ts);
 		UpdateImGui(ts);
-		UpdateGraphOffset();
+		grid.Update();
 		UpdateFunctions();
-		UpdateGrid();
 	}
 
 	void FuVi::UpdateImGui(sf::Time ts)
@@ -56,7 +53,7 @@ namespace App {
 		ImGui::PopStyleVar(2);
 		ImGui::PopStyleColor(2);
 
-		canDragGraph = canDragGraph && !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
+		grid.canDragGraph = grid.canDragGraph && !(ImGui::IsWindowHovered() || ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive());
 
 		if (!open)
 		{
@@ -146,32 +143,15 @@ namespace App {
 #ifdef DEBUG
 		ImGui::Begin("Debug", 0, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::Text("%.0f FPS", 1 / ts.asSeconds());
-		size_t vertexCount = gridLines.getVertexCount();
+		size_t vertexCount = grid.lines.getVertexCount();
 		for (auto& fData : functions)
 			vertexCount += fData.Vertices.getVertexCount();
 		ImGui::Text("Vertices: %d", vertexCount);
-		ImGui::Text("PixelsPerUnit: %f", pixelsPerUnit);
-		ImGui::Text("ZoomFactor: %f", zoomFactor);
+		ImGui::Text("PixelsPerUnit: %f", grid.pixelsPerUnit);
+		ImGui::Text("ZoomFactor: %f", grid.zoomFactor);
+		ImGui::Text("GraphOffset: [%d, %d]", grid.offset.x, grid.offset.y);
 		ImGui::End();
 #endif
-	}
-
-	void FuVi::UpdateGraphOffset()
-	{
-		static bool dragging = false;
-		static sf::Vector2i lastPos;
-
-		if (canDragGraph && sf::Mouse::isButtonPressed(sf::Mouse::Left))
-		{
-			sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
-			if (dragging) graphOffset += mousePos - lastPos;
-			lastPos = mousePos;
-			dragging = true;
-		}
-		else
-		{
-			canDragGraph = dragging = false;
-		}
 	}
 
 	void FuVi::UpdateFunctions()
@@ -184,137 +164,24 @@ namespace App {
 			for (int drawX = 0; drawX < width; drawX++)
 			{
 				float& x = *fData.X;
-				x = (drawX - width / 2.f) / pixelsPerUnit;
-				x -= graphOffset.x / pixelsPerUnit;
+				x = (drawX - width / 2.f) / grid.pixelsPerUnit;
+				x -= grid.offset.x / grid.pixelsPerUnit;
 
 				float y = fData.Expression.value();
-				y -= graphOffset.y / pixelsPerUnit;
+				y -= grid.offset.y / grid.pixelsPerUnit;
 
-				float drawY = height - (y * pixelsPerUnit + height / 2.f);
+				float drawY = height - (y * grid.pixelsPerUnit + height / 2.f);
 
 				fData.Vertices[drawX] = { {(float)drawX, drawY}, fData.Color };
 			}
 		}
 	}
 
-	void FuVi::UpdateGrid()
-	{
-		float w = (float)width;
-		float h = (float)height;
-		sf::Vector2i center(int(w / 2), int(h / 2));
-		center += graphOffset;
-
-		float cellSize = GetGridCellSize();
-
-		int rowLines = (int)ceilf(h / cellSize);
-		int colLines = (int)ceilf(w / cellSize);
-		if (rowLines % 2 == 0) rowLines++;
-		if (colLines % 2 == 0) colLines++;
-		int rowLinesHalf = rowLines >> 1;
-		int colLinesHalf = colLines >> 1;
-
-		float rowYStart = center.y - cellSize * rowLinesHalf;
-		float colXStart = center.x - cellSize * colLinesHalf;
-		int cellOffsetY = (int)roundf(graphOffset.y / cellSize);
-		int cellOffsetX = (int)roundf(graphOffset.x / cellSize);
-
-		int numberIndex = 0;
-		int rowNumberCount = rowLinesHalf;
-		int colNumberCount = colLinesHalf;
-		if ((rowLinesHalf + cellOffsetY) % 2) rowNumberCount--;
-		if ((colLinesHalf + cellOffsetX) % 2) colNumberCount--;
-		if (abs(cellOffsetY) > rowLinesHalf) rowNumberCount++;
-		if (abs(cellOffsetX) > colLinesHalf) colNumberCount++;
-
-		gridLines.resize((size_t)(rowLines * 2 + colLines * 2));
-		gridNumbers.resize((size_t)rowNumberCount + colNumberCount + 1);
-
-		for (int i = 0; i < rowLines; i++)
-		{
-			int gridIndex = i * 2;
-			float rowY = rowYStart + cellSize * (i - cellOffsetY);
-
-			gridLines[(size_t)gridIndex].position = { 0, rowY };
-			gridLines[(size_t)gridIndex + 1].position = { w, rowY };
-
-			int gridNumber = rowLinesHalf - (i - cellOffsetY);
-
-			sf::Uint8 alpha = (int)rowY == center.y ? 64 : gridNumber % 2 == 0 ? 32 : 16;
-			gridLines[(size_t)gridIndex].color.a = alpha;
-			gridLines[(size_t)gridIndex + 1].color.a = alpha;
-
-			if (gridNumber % 2 == 0 && gridNumber != 0)
-			{
-				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
-				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
-				number.SetPositionWithinBounds({ w / 2 + graphOffset.x, rowY }, { 10, 10, w - 10, h - 10 });
-				gridNumbers[numberIndex++] = number;
-			}
-		}
-
-		for (int i = 0; i < colLines; i++)
-		{
-			int gridIndex = rowLines * 2 + i * 2;
-			float colX = colXStart + cellSize * (i - cellOffsetX);
-
-			gridLines[(size_t)gridIndex].position = { colX, 0 };
-			gridLines[(size_t)gridIndex + 1].position = { colX, h };
-
-			int gridNumber = (colLinesHalf - (i - cellOffsetX)) * -1;
-
-			sf::Uint8 alpha = (int)colX == center.x ? 64 : gridNumber % 2 == 0 ? 32 : 16;
-			gridLines[(size_t)gridIndex].color.a = alpha;
-			gridLines[(size_t)gridIndex + 1].color.a = alpha;
-
-			if (gridNumber % 2 == 0 && gridNumber != 0)
-			{
-				int precision = zoomFactor < 1 ? (int)-log2(zoomFactor) : 0;
-				GridNumber number((gridNumber >> 1) * zoomFactor, precision, font);
-				number.SetPositionWithinBounds({ colX, h / 2 + graphOffset.y }, { 10, 10, w - 10, h - 10 }, false);
-				gridNumbers[numberIndex++] = number;
-			}
-		}
-		sf::Text number("0", font, 14);
-		number.setPosition({ w / 2 + graphOffset.x - 8, h / 2 + graphOffset.y });
-		gridNumbers[numberIndex] = number;
-	}
-
-	float FuVi::GetGridCellSize()
-	{
-		float unitCellSize = pixelsPerUnit;
-		uint64_t factor = 1;
-
-		while (pixelsPerUnit < baseUnit / factor)
-		{
-			factor <<= 1;
-			unitCellSize = pixelsPerUnit * factor;
-		}
-
-		if (factor > 1)
-		{
-			zoomFactor = (double)factor;
-			return unitCellSize / 2;
-		}
-
-		while (pixelsPerUnit >= baseUnit * (factor << 1))
-		{
-			factor <<= 1;
-			unitCellSize = pixelsPerUnit / factor;
-		}
-
-		zoomFactor = 1.0 / factor;
-
-		return unitCellSize / 2;
-	}
-
 	void FuVi::Draw()
 	{
 		window->clear();
 
-		window->draw(gridLines);
-
-		for (auto& text : gridNumbers)
-			window->draw(text);
+		grid.Draw();
 
 		for (auto& fData : functions)
 			window->draw(fData.Vertices);
@@ -328,30 +195,10 @@ namespace App {
 	{
 		ImGui::SFML::ProcessEvent(event);
 
+		grid.OnEvent(event);
+
 		switch (event.type)
 		{
-		case sf::Event::MouseButtonPressed:
-		{
-			auto mouse = event.mouseButton;
-			if (mouse.button == sf::Mouse::Left)
-			{
-				canDragGraph = mouse.x >= 0 && mouse.x < width
-					&& mouse.y >= 0 && mouse.y < height;
-			}
-			break;
-		}
-		case sf::Event::MouseWheelScrolled:
-		{
-			static float zoom = logf(baseUnit) / logf(1.1f);
-			float dir = event.mouseWheelScroll.delta;
-
-			if (pixelsPerUnit < baseUnit / ((uint64_t)1 << 62) && dir < 0) break;
-			if (pixelsPerUnit >= baseUnit * ((uint64_t)1 << 62) && dir > 0) break;
-
-			zoom += dir;
-			pixelsPerUnit = powf(1.1f, zoom);
-			break;
-		}
 		case sf::Event::Resized:
 		{
 			width = event.size.width;

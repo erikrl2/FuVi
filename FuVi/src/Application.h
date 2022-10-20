@@ -1,6 +1,8 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Window/Event.hpp>
+#include <SFML/System/Clock.hpp>
 
 class Application
 {
