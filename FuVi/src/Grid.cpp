@@ -1,5 +1,7 @@
 #include "Grid.h"
 
+#include <iostream>
+
 namespace App {
 
 	Grid::Grid(sf::RenderWindow* window)
@@ -154,6 +156,15 @@ namespace App {
 
 			zoom += dir;
 			pixelsPerUnit = powf(1.1f, zoom);
+
+			// Testing
+			sf::Vector2i screenCenter(int(width / 2), int(height / 2));
+			sf::Vector2i gridCenter = screenCenter + offset;
+			sf::Vector2i mPosRelative = sf::Mouse::getPosition(*window) - gridCenter;
+			offset = dir > 0 ?
+				offset - sf::Vector2i((sf::Vector2f)mPosRelative / 9.89f) :
+				offset + sf::Vector2i((sf::Vector2f)mPosRelative / 10.8f);
+
 			break;
 		}
 		case sf::Event::MouseButtonPressed:
