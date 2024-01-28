@@ -1,11 +1,20 @@
 #include "Grid.h"
+#include <cstring>
+#include <math.h>
 
 namespace App {
 
 	Grid::Grid(sf::RenderWindow* window)
 		: window(window)
 	{
+		#ifdef SFML_SYSTEM_WINDOWS
 		font.loadFromFile("c:/windows/fonts/consola.ttf");
+		#elif defined(SFML_SYSTEM_LINUX)
+		font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf");
+		#else
+		std::err << "Unsupported platform" << std::endl;
+		std::exit(1);
+		#endif
 	}
 
 	void Grid::Update()
@@ -166,6 +175,8 @@ namespace App {
 			}
 			break;
 		}
+		default:
+			break;
 		}
 	}
 
@@ -183,10 +194,10 @@ namespace App {
 		char format[] = "%.0f";
 		format[2] = '0' + std::max(0, std::min(7, precision));
 		char numberString[32]{};
-		sprintf_s(numberString, sizeof(numberString), format, number);
+		sprintf(numberString, format, number);
 		Text.setString(numberString);
 
-		textWidth = strnlen_s(numberString, sizeof(numberString)) * 8.f;
+		textWidth = strnlen(numberString, sizeof(numberString)) * 8.f;
 	}
 
 	void GridNumber::SetPositionWithinBounds(sf::Vector2f pos, const sf::FloatRect& bounds, bool isYAxis)

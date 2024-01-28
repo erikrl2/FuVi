@@ -8,49 +8,53 @@ project "FuVi"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-	buildoptions { "/bigobj" }
-
 	files
 	{
 		"src/**.h",
 		"src/**.cpp"
 	}
 
-	defines
-	{
-		"SFML_STATIC"
-	}
-
 	includedirs
 	{
 		"src",
-		"vendor/SFML-2.5.1/include",
 		"vendor/imgui-sfml",
 		"vendor/exprtk"
-	}
-
-	libdirs
-	{
-		"vendor/SFML-2.5.1/lib"
 	}
 
 	links
 	{
 		"ImGui-SFML",
-		"opengl32.lib",
-		"winmm.lib",
-		"gdi32.lib",
-		"freetype.lib"
 	}
 
 	filter "system:windows"
 		systemversion "latest"
 
-	filter "configurations:Debug"
-		runtime "Debug"
-		symbols "On"
+        buildoptions { "/bigobj" }
 
-		defines { "DEBUG" }
+        includedirs
+        {
+            "vendor/SFML-2.5.1/include",
+        }
+
+        libdirs
+        {
+            "vendor/SFML-2.5.1/lib"
+        }
+
+        defines
+        {
+            "SFML_STATIC"
+        }
+
+        links
+        {
+            "opengl32.lib",
+            "winmm.lib",
+            "gdi32.lib",
+            "freetype.lib"
+        }
+
+    filter { "system:windows", "configurations:Debug" }
 
 		links
 		{
@@ -61,12 +65,8 @@ project "FuVi"
 			"sfml-network-s-d.lib"
 		}
 
-	filter "configurations:Release"
+    filter { "system:windows", "configurations:Release" }
 		kind "WindowedApp"
-		runtime "Release"
-		optimize "On"
-
-		defines { "NDEBUG" }
 
 		links
 		{
@@ -76,3 +76,25 @@ project "FuVi"
 			"sfml-audio-s.lib",
 			"sfml-network-s.lib"
 		}
+
+	filter "system:linux"
+
+        links
+        {
+            "sfml-system",
+            "sfml-window",
+            "sfml-graphics",
+            "OpenGL",
+        }
+
+	filter "configurations:Debug"
+		runtime "Debug"
+		symbols "On"
+
+		defines { "DEBUG" }
+
+	filter "configurations:Release"
+		runtime "Release"
+		optimize "On"
+
+		defines { "NDEBUG" }

@@ -6,3 +6,6 @@
 .vs/
 *.sln
 *.vcxproj*
+/.cache/
+/compile_commands.json
+Makefile

@@ -14,18 +14,18 @@ project "ImGui-SFML"
 		"*.h"
 	}
 
-	defines
-	{
-		"SFML_STATIC"
-	}
-
-	includedirs
-	{
-		"../SFML-2.5.1/include"
-	}
-
 	filter "system:windows"
 		systemversion "latest"
+
+        defines
+        {
+            "SFML_STATIC"
+        }
+
+        includedirs
+        {
+            "../SFML-2.5.1/include"
+        }
 
 	filter "configurations:Debug"
 		runtime "Debug"

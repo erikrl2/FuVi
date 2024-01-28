@@ -4,12 +4,15 @@
 #include <imgui-SFML.h>
 
 #include <iostream>
+#include <cstring>
 
+#define MAIN() main(int argc, char** argv)
+
+#ifdef SFML_SYSTEM_WINDOWS
 #ifdef NDEBUG
 #include <Windows.h>
 #define MAIN() wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE previousInstance, _In_ PWSTR arguments, _In_ int commandShow)
-#else
-#define MAIN() main(int argc, char** argv)
+#endif
 #endif
 
 namespace App {
@@ -61,7 +64,7 @@ namespace App {
 			return;
 		}
 
-		ImGui::Text("%c(x) =", 'A' + (functions.size() + 5) % 26);
+		ImGui::Text("%c(x) =", 'A' + (uint8_t) ((functions.size() + 5) % 26));
 
 		ImGui::SameLine();
 
@@ -133,7 +136,7 @@ namespace App {
 				fData.Expression = expression;
 				fData.Vertices.resize(width);
 
-				strncpy_s(fData.Buffer, sizeof(fData.Buffer), exprCString, strlen(exprCString));
+				strncpy(fData.Buffer, exprCString, strlen(exprCString));
 				memset(exprCString, 0, sizeof(exprCString));
 
 				functions.push_back(std::move(fData));
@@ -211,6 +214,8 @@ namespace App {
 			window->close();
 			break;
 		}
+		default:
+			break;
 		}
 	}
 

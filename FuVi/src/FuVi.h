@@ -3,18 +3,20 @@
 #include "Application.h"
 #include "Grid.h"
 
+#include <SFML/Config.hpp>
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/VertexArray.hpp>
 
 #include <exprtk.hpp>
 
+#include <memory>
 #include <vector>
 
 namespace App {
 
 	struct FunctionData
 	{
-		sf::Color Color{ -1 };
+		sf::Color Color{ (sf::Uint32)-1 };
 		char Buffer[32]{};
 		exprtk::expression<float> Expression{};
 		std::unique_ptr<float> X{ std::make_unique<float>() };
